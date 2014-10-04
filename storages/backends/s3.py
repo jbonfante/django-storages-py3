@@ -10,7 +10,7 @@ from django.core.files.storage import Storage
 from django.core.exceptions import ImproperlyConfigured
 
 try:
-    from .S3 import AWSAuthConnection, QueryStringAuthGenerator, CallingFormat
+    from ..utils.S3 import AWSAuthConnection, QueryStringAuthGenerator, CallingFormat
 except ImportError:
     raise ImproperlyConfigured("Could not load amazon's S3 bindings.\nSee "
         "http://developer.amazonwebservices.com/connect/entry.jspa?externalID=134")
@@ -186,6 +186,12 @@ class S3Storage(Storage):
         response = self.connection.delete(self.bucket, name)
         if response.http_response.status != 204:
             raise IOError("S3StorageError: %s" % response.message)
+        else:
+            # If deletion succeeded remove the file from `self.entries` as well
+            try:
+                del self.entries[name]
+            except KeyError:
+                pass
 
     def exists(self, name):
         name = self._clean_name(name)
